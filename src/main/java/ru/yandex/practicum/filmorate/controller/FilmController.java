@@ -28,6 +28,7 @@ public class FilmController {
 
     @GetMapping
     public Collection<Film> getAll() {
+        log.info("Запрос на получение всех фильмов");
         return films.values();
     }
 
@@ -61,7 +62,11 @@ public class FilmController {
             log.warn("Валидация не пройдена: описание длиннее 200 символов");
             throw new ValidationException("Максимальная длина описания — 200 символов");
         }
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
+        if (film.getReleaseDate() == null) {
+            log.warn("Валидация не пройдена: отсутствует дата релиза");
+            throw new ValidationException("Дата релиза не может быть пустой");
+        }
+        if (film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
             log.warn("Валидация не пройдена: дата релиза раньше 28.12.1895");
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
         }

@@ -26,15 +26,14 @@ public class UserController {
 
     @GetMapping
     public Collection<User> getAll() {
+        log.info("Запрос на получение всех пользователей");
         return users.values();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
         validate(user);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+        normalizeUser(user);
         user.setId(nextId++);
         users.put(user.getId(), user);
         log.info("Создан пользователь: {}", user);
@@ -48,12 +47,16 @@ public class UserController {
             throw new NotFoundException("Пользователь с id=" + user.getId() + " не найден");
         }
         validate(user);
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+        normalizeUser(user);
         users.put(user.getId(), user);
         log.info("Обновлён пользователь: {}", user);
         return user;
+    }
+
+    private void normalizeUser(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
     }
 
     private void validate(User user) {
@@ -73,7 +76,11 @@ public class UserController {
             log.warn("Валидация не пройдена: логин содержит пробелы");
             throw new ValidationException("Логин не может содержать пробелы");
         }
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() == null) {
+            log.warn("Валидация не пройдена: отсутствует дата рождения");
+            throw new ValidationException("Дата рождения не может быть пустой");
+        }
+        if (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Валидация не пройдена: дата рождения в будущем");
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
