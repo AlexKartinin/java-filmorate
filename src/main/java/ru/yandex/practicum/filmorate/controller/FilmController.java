@@ -43,11 +43,13 @@ public class FilmController {
 
     @PostMapping
     public Film add(@RequestBody Film film) {
+        log.info("Запрос на добавление фильма: {}", film);
         return filmService.add(film);
     }
 
     @PutMapping
     public Film update(@RequestBody Film film) {
+        log.info("Запрос на обновление фильма: {}", film);
         return filmService.update(film);
     }
 
