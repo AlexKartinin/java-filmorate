@@ -11,9 +11,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,10 +60,7 @@ public class FilmService {
     public void addLike(int filmId, int userId) {
         log.info("Пользователь id={} ставит лайк фильму id={}", userId, filmId);
         Film film = findById(filmId);
-        userStorage.findById(userId).orElseThrow(() -> {
-            log.warn("Пользователь с id={} не найден при добавлении лайка", userId);
-            return new NotFoundException("Пользователь с id=" + userId + " не найден");
-        });
+        getUserOrThrow(userId);
         film.getLikes().add(userId);
         log.info("Пользователь id={} поставил лайк фильму id={}", userId, filmId);
     }
@@ -73,20 +68,25 @@ public class FilmService {
     public void removeLike(int filmId, int userId) {
         log.info("Пользователь id={} удаляет лайк с фильма id={}", userId, filmId);
         Film film = findById(filmId);
-        userStorage.findById(userId).orElseThrow(() -> {
-            log.warn("Пользователь с id={} не найден при удалении лайка", userId);
-            return new NotFoundException("Пользователь с id=" + userId + " не найден");
-        });
+        getUserOrThrow(userId);
         film.getLikes().remove(userId);
         log.info("Пользователь id={} удалил лайк с фильма id={}", userId, filmId);
     }
 
     public List<Film> getPopular(int count) {
+        if (count <= 0) {
+            log.warn("Некорректное значение count={} при запросе популярных фильмов", count);
+            throw new ValidationException("Количество фильмов должно быть положительным числом");
+        }
         log.info("Получение {} популярных фильмов", count);
-        return filmStorage.findAll().stream()
-                .sorted(Comparator.comparingInt((Film f) -> f.getLikes().size()).reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getPopular(count);
+    }
+
+    private void getUserOrThrow(int userId) {
+        userStorage.findById(userId).orElseThrow(() -> {
+            log.warn("Пользователь с id={} не найден", userId);
+            return new NotFoundException("Пользователь с id=" + userId + " не найден");
+        });
     }
 
     private void validate(Film film) {
