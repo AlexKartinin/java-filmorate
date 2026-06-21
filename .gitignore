@@ -1,3 +1,7 @@
+*.txt
+*.md
+!README.md
+
 *.class
 *.log
 *.jar
